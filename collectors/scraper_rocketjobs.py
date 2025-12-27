@@ -9,51 +9,61 @@ def scrape_rocket():
     }
     
     all_offers = []
-    max_pages = 25
-
-    print(f"Starting scraping RocketJobs (Pages 1 to {max_pages})...")
+    max_pages = 10 
 
     for page_num in range(1, max_pages + 1):
         url = f"{base_url}?page={page_num}"
         
         try:
-            print(f"  Fetching page {page_num}...")
             response = requests.get(url, headers=headers, timeout=10)
-            
             if response.status_code != 200:
                 break
 
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            page_links = soup.find_all('a', href=True)
-            unique_hrefs = set()
+            offer_cards = soup.find_all('div', attrs={"class": lambda x: x and 'MuiBox-root' in x})
+            
+            found_on_page = 0
+            
+            for card in offer_cards:
+                link_tag = card.find('a', href=True)
+                if not link_tag:
+                    continue
+                
+                href = link_tag['href']
+                if '/oferta-pracy/' not in href:
+                    continue
 
-            for a in page_links:
-                href = a['href']
-                if '/oferta-pracy/' in href:
-                    unique_hrefs.add(href)
-
-            if not unique_hrefs:
-                break
-
-            for href in unique_hrefs:
                 full_link = f"https://rocketjobs.pl{href}"
                 
-                try:
-                    slug = href.split('/')[-1]
-                    title = slug.replace('-', ' ').title()
-                except Exception:
-                    title = "RocketJobs Offer"
+                title = "RocketJobs Offer"
+                title_tag = card.find('h2')
+                if not title_tag:
+                    title_tag = card.find('h3')
+                
+                if title_tag:
+                    title = title_tag.text.strip()
+                else:
+                    clean_slug = href.split('/')[-1].replace('-', ' ').title()
+                    if "Poznan" in clean_slug:
+                        clean_slug = clean_slug.split("Poznan")[0]
+                    title = clean_slug
 
+                company = "RocketJobs User"
+                
                 all_offers.append({
                     "title": title,
-                    "company": "Unknown",
+                    "company": company,
                     "city": "Poznań",
                     "salary": "Undisclosed",
                     "link": full_link,
                     "source_site": "rocketjobs.pl"
                 })
-            
+                found_on_page += 1
+
+            if found_on_page == 0:
+                pass
+
             time.sleep(1)
 
         except Exception:
@@ -62,5 +72,7 @@ def scrape_rocket():
     return all_offers
 
 if __name__ == "__main__":
-    offers = scrape_rocket()
-    print(f"Total offers found: {len(offers)}")
+    data = scrape_rocket()
+    print(len(data))
+    if data:
+        print(data[0])

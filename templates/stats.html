@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Statystyki - Robota.tej</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="logo">🐐 Robota.tej</div>
+            <div class="nav-links">
+                <a href="/" class="btn-outline">&larr; Powrót do Ofert</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1>📊 Trendy na Rynku Pracy</h1>
+            <p>Analiza najczęściej pojawiających się słów w ofertach</p>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <div class="table-wrapper">
+            <div class="stats-header">
+                <h2>🔥 Najpopularniejsze Słowa Kluczowe</h2>
+            </div>
+            
+            {% if top_keywords %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Słowo</th>
+                        <th>Liczba ofert</th>
+                        <th>Wizualizacja</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set max_val = top_keywords[0][1] %}
+                    {% if max_val == 0 %}{% set max_val = 1 %}{% endif %}
+
+                    {% for word, count in top_keywords %}
+                    <tr>
+                        <td class="keyword-text">{{ word }}</td>
+                        <td>{{ count }}</td>
+                        <td class="progress-cell">
+                            <progress value="{{ count }}" max="{{ max_val }}"></progress>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="empty-state">Brak wystarczającej ilości danych.</p>
+            {% endif %}
+        </div>
+
+        <div class="stats-grid">
+            <div class="stats-card">
+                <h3>Źródła Ofert</h3>
+                <ul class="stats-list">
+                    {% for source, count in sources.items() %}
+                    <li class="stats-item">
+                        <span>{{ source }}</span>
+                        <strong>{{ count }}</strong>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="stats-card">
+                <h3>Top Lokalizacje</h3>
+                <ul class="stats-list">
+                    {% for city, count in cities.items() %}
+                    <li class="stats-item">
+                        <span>{{ city }}</span>
+                        <strong>{{ count }}</strong>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Robota.tej | Moduł Analityczny</p>
+    </footer>
+</body>
+</html>

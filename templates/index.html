@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robota.tej - Agregator Ofert</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container nav-content">
+        <div class="logo">🐐 Robota.tej</div>
+        <div class="nav-links">
+            <a href="/stats" class="btn-outline">📊 Statystyki Rynku</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="container">
+        <h1>Znajdź pracę w Wielkopolsce</h1>
+        <p>Baza {{ total_items }} aktualnych ofert pracy.</p>
+        
+        <form action="/" method="get" class="search-bar">
+            <input type="text" name="query" placeholder="Stanowisko (np. Kierowca, Magazynier)..." value="{{ current_query }}">
+            
+            <select name="source">
+                <option value="">Wszystkie serwisy</option>
+                {% for src in sources %}
+                <option value="{{ src }}" {% if current_source == src %}selected{% endif %}>{{ src }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit">Szukaj</button>
+            <a href="/" class="reset-link">Reset</a>
+        </form>
+
+        <div class="quick-filters">
+            <span>Popularne kategorie:</span>
+            <a href="/?query=kierowca">Kierowca</a>
+            <a href="/?query=sprzedawca">Sprzedawca</a>
+            <a href="/?query=magazynier">Magazynier</a>
+            <a href="/?query=księgowa">Księgowa</a>
+        </div>
+    </div>
+</header>
+
+<main class="container results-container">
+    {% if offers %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 70%">Stanowisko</th>
+                        <th style="width: 15%">Miasto</th>
+                        <th style="width: 15%">Serwis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for offer in offers %}
+                    <tr>
+                        <td>
+                            <a href="{{ offer.link }}" target="_blank" class="offer-link">
+                                {{ offer.title }}
+                                <span class="external-icon">↗</span>
+                            </a>
+                        </td>
+                        <td class="city-cell">{{ offer.city }}</td>
+                        <td>
+                            <span class="badge {{ offer.source_site|lower|replace('.', '') }}">
+                                {{ offer.source_site }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="{{ url_for('index', page=page-1, query=current_query, source=current_source) }}" class="page-btn">&larr;</a>
+            {% endif %}
+
+            {% for p in page_range %}
+                <a href="{{ url_for('index', page=p, query=current_query, source=current_source) }}" 
+                   class="page-num {% if p == page %}active{% endif %}">
+                   {{ p }}
+                </a>
+            {% endfor %}
+            
+            {% if page < total_pages %}
+            <a href="{{ url_for('index', page=page+1, query=current_query, source=current_source) }}" class="page-btn">&rarr;</a>
+            {% endif %}
+        </div>
+        
+        <p style="text-align:center; color:#999; font-size:0.8rem; margin-top:10px;">
+            Strona {{ page }} z {{ total_pages }}
+        </p>
+
+    {% else %}
+        <div class="empty-state">
+            <h3>Brak wyników 😔</h3>
+            <p>Spróbuj zmienić filtry lub wpisz inne stanowisko.</p>
+        </div>
+    {% endif %}
+</main>
+
+<footer>
+    <p>&copy; 2025 Robota.tej | Projekt zaliczeniowy Python</p>
+</footer>
+
+</body>
+</html>

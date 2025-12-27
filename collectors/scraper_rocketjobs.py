@@ -9,7 +9,7 @@ def scrape_rocket():
     }
     
     all_offers = []
-    max_pages = 10
+    max_pages = 25
 
     print(f"Starting scraping RocketJobs (Pages 1 to {max_pages})...")
 

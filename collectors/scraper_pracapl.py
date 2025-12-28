@@ -11,17 +11,13 @@ def scrape_pracapl():
     all_data = []
     seen_urls = set()
     page_num = 1
-    max_pages = 15
+    MAX_PAGES_PRACAPL = 5
 
-    print(f"Starting Praca.pl scraping (limit: {max_pages} pages)...")
+    print("[Praca.pl] Starting scraper...")
 
-    while page_num <= max_pages:
-        if page_num == 1:
-            url = base_url
-        else:
-            url = f"{base_url}?p={page_num}"
-            
-        print(f"  Processing page {page_num}...")
+    while page_num <= MAX_PAGES_PRACAPL:
+        url = base_url if page_num == 1 else f"{base_url}?p={page_num}"
+        print(f"[Praca.pl] Processing page {page_num}...")
 
         try:
             resp = requests.get(url, headers=headers, timeout=10)
@@ -29,24 +25,15 @@ def scrape_pracapl():
                 break
 
             soup = BeautifulSoup(resp.text, 'html.parser')
-            
             listing_items = soup.find_all('li', class_="listing__item")
             
-            current_page_offers = 0
-
             for item in listing_items:
-                link_tag = item.find('a', class_="listing__title")
-                
-                if not link_tag:
-                    link_tag = item.find('a', href=True)
-
+                link_tag = item.find('a', class_="listing__offer-title", href=True) or item.find('a', href=True)
                 if not link_tag:
                     continue
 
                 href = link_tag['href']
-                full_link = href
-                if not full_link.startswith('http'):
-                    full_link = f"https://www.praca.pl{href}"
+                full_link = href if href.startswith('http') else f"https://www.praca.pl{href}"
 
                 if full_link in seen_urls:
                     continue
@@ -55,35 +42,18 @@ def scrape_pracapl():
                     continue
 
                 seen_urls.add(full_link)
+                title = link_tag.text.strip() or "Praca.pl Offer"
 
-                title = link_tag.text.strip()
-                if not title:
-                    title = "Praca.pl Offer"
-
-                offer_obj = {
+                all_data.append({
                     "title": title,
-                    "company": "Unknown",
-                    "city": "Poznań",
-                    "salary": "Undisclosed",
                     "link": full_link,
-                    "source_site": "praca.pl"
-                }
-                
-                all_data.append(offer_obj)
-                current_page_offers += 1
-
-            if current_page_offers == 0:
-                print("  No offers found on this page. Stopping.")
-                break
+                    "source_site": "Praca.pl"
+                })
 
             page_num += 1
             time.sleep(1)
-
         except Exception:
             break
 
+    print(f"[Praca.pl] Finished. Total offers: {len(all_data)}")
     return all_data
-
-if __name__ == "__main__":
-    offers = scrape_pracapl()
-    print(f"Total found: {len(offers)}")

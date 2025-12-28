@@ -1,6 +1,5 @@
 import sqlite3
 import os
-import pandas as pd
 
 DB_PATH = os.path.join("data", "oferty.db")
 
@@ -21,13 +20,10 @@ def add_offers(df):
                     continue
 
                 cursor.execute("""
-                    INSERT INTO offers (title, company, city, salary, link, source_site)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO offers (title, link, source_site)
+                    VALUES (?, ?, ?)
                 """, (
                     offer['title'],
-                    offer['company'],
-                    offer['city'],
-                    offer['salary'],
                     offer['link'],
                     offer['source_site']
                 ))
@@ -36,5 +32,5 @@ def add_offers(df):
             return added_count
 
     except sqlite3.Error as e:
-        print(f"Database error: {e}")
+        print(f"[DB Manager] Error: {e}")
         return 0

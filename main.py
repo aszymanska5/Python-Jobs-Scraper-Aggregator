@@ -9,43 +9,33 @@ def run_aggregator():
     
     all_offers_list = []
     
-    print("\n >> 1/3 Running RocketJobs scraper...")
     try:
         rocket_data = scrape_rocket()
-        print(f"    Fetched: {len(rocket_data)} offers")
         all_offers_list.extend(rocket_data)
     except Exception as e:
-        print(f"    Error RocketJobs: {e}")
+        print(f"[Main] Error RocketJobs: {e}")
 
-    print("\n >> 2/3 Running Praca.pl scraper...")
     try:
         pracapl_data = scrape_pracapl()
-        print(f"    Fetched: {len(pracapl_data)} offers")
         all_offers_list.extend(pracapl_data)
     except Exception as e:
-        print(f"    Error Praca.pl: {e}")
+        print(f"[Main] Error Praca.pl: {e}")
 
-    print("\n >> 3/3 Running OLX scraper...")
     try:
         olx_data = scrape_olx()
-        print(f"    Fetched: {len(olx_data)} offers")
         all_offers_list.extend(olx_data)
     except Exception as e:
-        print(f"    Error OLX: {e}")
+        print(f"[Main] Error OLX: {e}")
 
-    print(f"\n >> Aggregating {len(all_offers_list)} offers into DataFrame...")
+    print(f"[Main] Aggregating {len(all_offers_list)} offers...")
     
     if all_offers_list:
         df = pd.DataFrame(all_offers_list)
-        
-        print(f"    DataFrame shape: {df.shape}")
-        
-        added_count = add_offers(df)
-        print(f"    Successfully saved to DB: {added_count} new offers")
+        new_count = add_offers(df)
+        print(f"[Main] Success! Added {new_count} new unique offers.")
     else:
-        print("    No offers collected from any source.")
+        print("[Main] No offers fetched today.")
 
-    print("-" * 30)
     print("--- FINISHED ---")
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@
             <div class="quick-filters">
                 <span class="label">Popularne:</span>
                 {% for f in quick_filters %}
-                <a href="/?query={{ f }}&sort={{ current_sort }}" class="filter-chip">{{ f }}</a>
+                <a href="{{ url_for('index', query=f, sort=current_sort) }}" class="filter-chip">{{ f }}</a>
                 {% endfor %}
             </div>
             {% endif %}
@@ -54,8 +54,8 @@
             <div class="sorting-links">
                 <a href="{{ url_for('index', sort='newest', query=current_query, source=current_source) }}" 
                    class="sort-link {% if current_sort == 'newest' %}active{% endif %}">Najnowsze</a>
-                <a href="{{ url_for('index', sort='alpha', query=current_query, source=current_source) }}" 
-                   class="sort-link {% if current_sort == 'alpha' %}active{% endif %}">Alfabetycznie A-Z</a>
+                <a href="{{ url_for('index', sort='az', query=current_query, source=current_source) }}" 
+                   class="sort-link {% if current_sort == 'az' %}active{% endif %}">Alfabetycznie A-Z</a>
             </div>
             <div class="page-indicator">
                 Strona <strong>{{ page }}</strong> z {{ total_pages }}

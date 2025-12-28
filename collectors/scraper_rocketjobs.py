@@ -1,11 +1,12 @@
 import requests
 import time
+import random
 from bs4 import BeautifulSoup
+from config import ROCKET_URL, USER_AGENT
 
 def scrape_rocket():
-    base_url = "https://rocketjobs.pl/oferty-pracy/poznan"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": USER_AGENT
     }
     
     all_offers = []
@@ -14,7 +15,7 @@ def scrape_rocket():
     print("[RocketJobs] Starting scraper...")
 
     for page_num in range(1, MAX_PAGES_ROCKET + 1):
-        url = f"{base_url}?page={page_num}"
+        url = f"{ROCKET_URL}?page={page_num}"
         print(f"[RocketJobs] Processing page {page_num}...")
         
         try:
@@ -51,7 +52,7 @@ def scrape_rocket():
                     "source_site": "RocketJobs"
                 })
 
-            time.sleep(1)
+            time.sleep(random.uniform(1, 2))
         except Exception:
             continue
 

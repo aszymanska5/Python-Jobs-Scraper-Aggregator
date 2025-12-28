@@ -1,9 +1,13 @@
 import sqlite3
-import os
+import pandas as pd
+from config import DB_PATH
 
-DB_PATH = os.path.join("data", "oferty.db")
+def get_db_connection() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def add_offers(df):
+def add_offers(df: pd.DataFrame) -> int:
     if df.empty:
         return 0
 

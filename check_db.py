@@ -1,8 +1,7 @@
 import sqlite3
 import pandas as pd
 import os
-
-DB_PATH = os.path.join("data", "oferty.db")
+from config import DB_PATH
 
 def inspect_db():
     if not os.path.exists(DB_PATH):

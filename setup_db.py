@@ -1,13 +1,10 @@
 import sqlite3
 import os
-
-DB_FOLDER = 'data'
-DB_FILE = 'oferty.db'
-DB_PATH = os.path.join(DB_FOLDER, DB_FILE)
+from config import DB_PATH, DB_FOLDER_PATH
 
 def create_database():
-    if not os.path.exists(DB_FOLDER):
-        os.makedirs(DB_FOLDER)
+    if not os.path.exists(DB_FOLDER_PATH):
+        os.makedirs(DB_FOLDER_PATH)
 
     try:
         with sqlite3.connect(DB_PATH) as conn:

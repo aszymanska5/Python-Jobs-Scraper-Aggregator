@@ -1,11 +1,12 @@
 import requests
 import time
+import random
 from bs4 import BeautifulSoup
+from config import PRACA_PL_URL, USER_AGENT
 
 def scrape_pracapl():
-    base_url = "https://www.praca.pl/poznan.html"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": USER_AGENT
     }
 
     all_data = []
@@ -16,7 +17,7 @@ def scrape_pracapl():
     print("[Praca.pl] Starting scraper...")
 
     while page_num <= MAX_PAGES_PRACAPL:
-        url = base_url if page_num == 1 else f"{base_url}?p={page_num}"
+        url = PRACA_PL_URL if page_num == 1 else f"{PRACA_PL_URL}?p={page_num}"
         print(f"[Praca.pl] Processing page {page_num}...")
 
         try:
@@ -51,7 +52,7 @@ def scrape_pracapl():
                 })
 
             page_num += 1
-            time.sleep(1)
+            time.sleep(random.uniform(1, 2))
         except Exception:
             break
 

@@ -2,9 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
+from config import OLX_URL, USER_AGENT
 
 def scrape_olx():
-    base_url = "https://www.olx.pl/praca/poznan/"
     data = []
     seen_links = set()
     MAX_PAGES_OLX = 5
@@ -12,11 +12,11 @@ def scrape_olx():
     print("[OLX] Starting scraper...")
     
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': USER_AGENT
     }
 
     for page in range(1, MAX_PAGES_OLX + 1):
-        url = base_url if page == 1 else f"{base_url}?page={page}"
+        url = OLX_URL if page == 1 else f"{OLX_URL}?page={page}"
         print(f"[OLX] Processing page {page}...")
 
         try:

@@ -1,39 +1,57 @@
-from db_manager import init_db, add_offer
-from collectors.scraper_nofluff import scrape_nofluff
-from collectors.scraper_olx import scrape_olx
-from collectors.scraper_pracapl import scrape_pracapl
+import pandas as pd
 from collectors.scraper_rocketjobs import scrape_rocket
+from collectors.scraper_pracapl import scrape_pracapl
+from collectors.scraper_olx import scrape_olx
+from collectors.scraper_nofluff import scrape_nofluff
+from db_manager import add_offers
 
 def run_aggregator():
-    print("--- STARTING JOB AGGREGATOR (STABLE TRIPLE-SOURCE MODE) ---")
+    print("--- STARTING JOB AGGREGATOR ---")
     
-    init_db()
+    all_offers_list = []
     
-    scrapers = {
-        "NoFluffJobs": scrape_nofluff,
-        "OLX": scrape_olx,
-        "Praca.pl": scrape_pracapl,
-        "Rocket Jobs": scrape_rocket,
-    }
-    
-    total_new = 0
-    
-    for name, scraper_func in scrapers.items():
-        print(f"\n[Main] Running {name} scraper...")
-        try:
-            offers = scraper_func()
-            new_from_source = 0
-            for offer in offers:
-                if add_offer(offer):
-                    new_from_source += 1
-            
-            total_new += new_from_source
-            print(f"[Main] {name} returned {len(offers)} offers. Added {new_from_source} NEW.")
-        except Exception as e:
-            print(f"[Main] Error in {name}: {e}")
+    try:
+        rocket_data = scrape_rocket()
+        print(f"[Main] RocketJobs fetched: {len(rocket_data)}")
+        all_offers_list.extend(rocket_data)
+    except Exception as e:
+        print(f"[Main] Error RocketJobs: {e}")
 
-    print("\n--- AGGREGATION FINISHED ---")
-    print(f"Total new unique offers added this run: {total_new}")
+    try:
+        nfj_data = scrape_nofluff()
+        print(f"[Main] NoFluffJobs fetched: {len(nfj_data)}")
+        all_offers_list.extend(nfj_data)
+    except Exception as e:
+        print(f"[Main] Error NoFluffJobs: {e}")
+
+    try:
+        pracapl_data = scrape_pracapl()
+        print(f"[Main] Praca.pl fetched: {len(pracapl_data)}")
+        all_offers_list.extend(pracapl_data)
+    except Exception as e:
+        print(f"[Main] Error Praca.pl: {e}")
+
+    try:
+        olx_data = scrape_olx()
+        print(f"[Main] OLX fetched: {len(olx_data)}")
+        all_offers_list.extend(olx_data)
+    except Exception as e:
+        print(f"[Main] Error OLX: {e}")
+
+    print(f"[Main] Aggregating {len(all_offers_list)} offers...")
+    
+    if all_offers_list:
+        df = pd.DataFrame(all_offers_list)
+        
+        if 'link' in df.columns:
+            df.drop_duplicates(subset=['link'], keep='first', inplace=True)
+        
+        new_count = add_offers(df)
+        print(f"[Main] Success! Added {new_count} new unique offers.")
+    else:
+        print("[Main] No offers fetched today.")
+
+    print("--- FINISHED ---")
 
 if __name__ == "__main__":
     run_aggregator()

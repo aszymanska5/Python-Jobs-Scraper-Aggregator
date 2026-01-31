@@ -16,55 +16,68 @@
 
     <main class="container">
         <div class="hero">
-            <h1>Statystyki <strong>Rynku Pracy</strong></h1>
+            <h1>Analityka <strong>Rynku Pracy</strong></h1>
+            <p class="hero-subtitle">Przeanalizowano {{ total }} ofert</p>
         </div>
 
-        <div class="table-wrapper">
-            <div class="table-controls">
-                <h3>🔥 Popularne słowa kluczowe</h3>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Słowo kluczowe</th>
-                        <th>Liczba ofert</th>
-                        <th>Popularność</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for word, count in top_keywords %}
-                    <tr>
-                        <td><strong>{{ word }}</strong></td>
-                        <td>{{ count }}</td>
-                        <td><progress value="{{ count }}" max="{{ max_val }}" style="width: 100%;"></progress></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <br><br>
-
-        <div class="table-wrapper">
-            <div class="table-controls">
-                <h3>📊 Udział serwisów</h3>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Serwis</th>
-                        <th>Liczba ofert</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>🍰 Źródła Ofert</h3>
+                <table class="simple-chart-table">
                     {% for src, count in sources.items() %}
                     <tr>
-                        <td><span class="badge {{ src|lower|replace('.', '') }}">{{ src }}</span></td>
-                        <td><strong>{{ count }}</strong></td>
+                        <td class="col-label"><span class="badge {{ src|lower|replace('.', '') }}">{{ src }}</span></td>
+                        <td class="col-bar">
+                            <progress class="stat-progress" value="{{ count }}" max="{{ max_source }}"></progress>
+                        </td>
+                        <td class="col-count">{{ count }}</td>
                     </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                </table>
+            </div>
+
+            <div class="chart-card">
+                <h3>🎓 Poziom Stanowiska</h3>
+                <table class="simple-chart-table">
+                    {% for item in seniority %}
+                    <tr>
+                        <td class="col-label">{{ item.label }}</td>
+                        <td class="col-bar">
+                            <progress class="stat-progress" value="{{ item.count }}" max="{{ max_seniority }}"></progress>
+                        </td>
+                        <td class="col-count">{{ item.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="table-wrapper">
+                <div class="table-controls">
+                    <h3>🔥 Top 10 Technologii</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Technologia</th>
+                            <th class="col-popularity">Popularność</th>
+                            <th>Liczba</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in keywords %}
+                        <tr>
+                            <td><strong>{{ item.word }}</strong></td>
+                            <td>
+                                <progress class="stat-progress" value="{{ item.count }}" max="{{ max_keyword }}"></progress>
+                            </td>
+                            <td>{{ item.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 </body>

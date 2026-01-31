@@ -38,6 +38,8 @@ def scrape_pracapl():
                 href = link_tag['href']
                 full_link = href if href.startswith('http') else f"https://www.praca.pl{href}"
 
+                full_link = full_link.split('#')[0]
+
                 if full_link in seen_urls:
                     continue
                 

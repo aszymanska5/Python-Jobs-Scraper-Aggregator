@@ -13,6 +13,14 @@ def scrape_pracapl():
     seen_urls = set()
     page_num = 1
     MAX_PAGES_PRACAPL = 5
+    
+    forbidden_words = [
+        "sprzedawca", "kasjer", "magazynier", "kierowca", "kurier", "kucharz", 
+        "kelner", "lekarska", "pielęgniarka", "fizjoterapeuta", "kosmetyczka", 
+        "budowlany", "produkcyjny", "fizyczny", "ochrony", "sprzątanie",
+        "handlowy", "przedstawiciel", "nieruchomości", "prawnik", "apteka",
+        "fryzjer", "mechanik", "ślusarz", "spawacz", "ochroniarz"
+    ]
 
     print("[Praca.pl] Starting scraper...")
 
@@ -23,32 +31,51 @@ def scrape_pracapl():
         print(f"[Praca.pl] Processing page {page_num}...")
 
         try:
-            resp = requests.get(url, headers=headers, timeout=10)
+            resp = requests.get(url, headers=headers, timeout=15)
             if resp.status_code != 200:
+                print(f"[Praca.pl] Page {page_num} returned status {resp.status_code}")
                 break
 
             soup = BeautifulSoup(resp.text, 'html.parser')
-            listing_items = soup.find_all('li', class_="listing__item")
             
-            for item in listing_items:
-                link_tag = item.find('a', class_="listing__offer-title", href=True) or item.find('a', href=True)
+            offer_containers = soup.find_all(['li', 'div', 'article'], 
+                class_=lambda x: x and any(c in x for c in ["listing__item", "offer-details", "item"]))
+
+            if not offer_containers:
+                print(f"[Praca.pl] No more containers found on page {page_num}")
+                break
+
+            for container in offer_containers:
+                link_tag = container.find('a', href=True)
                 if not link_tag:
                     continue
 
                 href = link_tag['href']
                 full_link = href if href.startswith('http') else f"https://www.praca.pl{href}"
-
-                full_link = full_link.split('#')[0]
+                full_link = full_link.split('#')[0].split('?')[0]
 
                 if full_link in seen_urls:
                     continue
                 
-                if 'oferta' not in full_link and '.html' not in full_link:
+                title_tag = container.find(['h2', 'h3']) or link_tag
+                title = title_tag.get_text(" ", strip=True)
+                
+                if not title or len(title) < 5:
+                    continue
+
+                title_lower = title.lower()
+                
+                is_forbidden = False
+                for bad in forbidden_words:
+                    if bad in title_lower:
+                        is_forbidden = True
+                        break
+                
+                if is_forbidden:
                     continue
 
                 seen_urls.add(full_link)
-                title = link_tag.text.strip() or "Praca.pl Offer"
-
+                
                 all_data.append({
                     "title": title,
                     "link": full_link,
@@ -56,8 +83,10 @@ def scrape_pracapl():
                 })
 
             page_num += 1
-            time.sleep(random.uniform(1, 2))
-        except Exception:
+            time.sleep(random.uniform(2, 4))
+            
+        except Exception as e:
+            print(f"[Praca.pl] Error: {e}")
             break
 
     print(f"[Praca.pl] Finished. Total offers: {len(all_data)}")

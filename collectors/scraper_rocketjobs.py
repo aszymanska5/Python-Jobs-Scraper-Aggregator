@@ -1,7 +1,7 @@
 import requests
+from bs4 import BeautifulSoup
 import time
 import random
-from bs4 import BeautifulSoup
 from config import ROCKET_URL, USER_AGENT
 
 def scrape_rocket():
@@ -9,57 +9,79 @@ def scrape_rocket():
         "User-Agent": USER_AGENT
     }
     
-    all_offers = []
-    MAX_PAGES_ROCKET = 5 
+    all_data = []
+    seen_urls = set()
+    page = 1
+    MAX_PAGES_ROCKET = 5
+    
+    allowed_keywords = [
+        "python", "data", "it", "support", "analyst", "developer", "programista", 
+        "engineer", "manager", "cloud", "sap", "devops", "junior", "intern", 
+        "staz", "staż", "backend", "fullstack", "frontend", "automation", "test",
+        "ai", "ml", "bi", "security", "infrastructure", "system", "admin"
+    ]
 
     print("[RocketJobs] Starting scraper...")
 
-    for page_num in range(1, MAX_PAGES_ROCKET + 1):
-        sep = '&' if '?' in ROCKET_URL else '?'
-        url = f"{ROCKET_URL}{sep}page={page_num}"
-        
-        print(f"[RocketJobs] Processing page {page_num}...")
+    while page <= MAX_PAGES_ROCKET:
+        if "?" in ROCKET_URL:
+            url = f"{ROCKET_URL}&page={page}"
+        else:
+            url = f"{ROCKET_URL}?page={page}"
+            
+        print(f"[RocketJobs] Processing page {page}...")
         
         try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
                 break
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-            offer_cards = soup.find_all('div', attrs={"class": lambda x: x and 'MuiBox-root' in x})
             
-            for card in offer_cards:
-                link_tag = card.find('a', href=True)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            offer_divs = soup.find_all('div', class_=lambda x: x and 'MuiBox-root' in x)
+            
+            for div in offer_divs:
+                link_tag = div.find('a', href=True)
                 if not link_tag:
                     continue
                 
                 href = link_tag['href']
-                if '/oferta-pracy/' not in href:
+                if not href.startswith('/oferta-pracy'):
                     continue
-
+                
+                base_href = href.rsplit('-', 1)[0]
                 full_link = f"https://rocketjobs.pl{href}"
                 
-                title_tag = card.find('h2') or card.find('h3')
-                if title_tag:
-                    title = title_tag.text.strip()
-                else:
-                    clean_slug = href.split('/')[-1].replace('-', ' ').title()
-                    if "Poznan" in clean_slug:
-                        clean_slug = clean_slug.split("Poznan")[0]
-                    title = clean_slug.strip()
-
-                if title.lower().endswith("nowa"):
-                    title = title[:-4].strip()
-
-                all_offers.append({
+                if full_link in seen_urls:
+                    continue
+                
+                title_tag = div.find('h2') or div.find('h3') or link_tag.find('div')
+                if not title_tag:
+                    continue
+                    
+                title = title_tag.get_text(" ", strip=True)
+                title_lower = title.lower()
+                
+                is_relevant = False
+                for word in allowed_keywords:
+                    if word in title_lower:
+                        is_relevant = True
+                        break
+                
+                if not is_relevant:
+                    continue
+                seen_urls.add(full_link)
+                
+                all_data.append({
                     "title": title,
                     "link": full_link,
                     "source_site": "RocketJobs"
                 })
 
-            time.sleep(random.uniform(1, 2))
+            page += 1
+            time.sleep(random.uniform(1, 3))
+            
         except Exception:
-            continue
-
-    print(f"[RocketJobs] Finished. Total offers: {len(all_offers)}")
-    return all_offers
+            break
+            
+    print(f"[RocketJobs] Finished. Total offers: {len(all_data)}")
+    return all_data

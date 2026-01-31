@@ -8,7 +8,7 @@ if not os.path.exists(DB_FOLDER_PATH):
     os.makedirs(DB_FOLDER_PATH)
 
 OLX_URL = "https://www.olx.pl/praca/informatyka/poznan/"
-PRACA_PL_URL = "https://www.praca.pl/informatyka-administracja_m-poznan.html"
+PRACA_PL_URL = "https://www.praca.pl/poznan.html?m=Poznań" 
 ROCKET_URL = "https://rocketjobs.pl/oferty-pracy/poznan?keyword=it&radius=0"
 NOFLUFF_URL = "https://nofluffjobs.com/pl/poznan?criteria=category%3Dsys-administrator,business-analyst,architecture,backend,data,ux,devops,erp,embedded,frontend,fullstack,game-dev,mobile,project-manager,security,support,testing,other"
 

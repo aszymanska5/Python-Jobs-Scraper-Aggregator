@@ -2,7 +2,7 @@ import sqlite3
 import os
 from config import DB_PATH, DB_FOLDER_PATH
 
-def create_database():
+def run_setup():
     if not os.path.exists(DB_FOLDER_PATH):
         os.makedirs(DB_FOLDER_PATH)
 
@@ -24,4 +24,4 @@ def create_database():
         print(f"[Database] Error: {e}")
 
 if __name__ == '__main__':
-    create_database()
+    run_setup()

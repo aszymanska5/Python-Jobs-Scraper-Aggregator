@@ -5,65 +5,64 @@
 ![Pandas](https://img.shields.io/badge/Pandas-Data_Analysis-orange)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-lightgrey)
 
-**Robota.tej** is an ETL (Extract, Transform, Load) application and a web service designed to aggregate job offers from the IT market in Greater Poland (Poznań area). The system automatically fetches announcements from popular job boards, processes the data, and presents it in a clean, user-friendly interface.
+**Robota.tej** is an advanced ETL (Extract, Transform, Load) application and web service designed to aggregate job offers from the IT market in Greater Poland (Poznań area). The system automatically fetches announcements from multiple job boards, processes the data using Pandas, and presents it through a clean, user-friendly web interface with built-in market analytics.
 
 ## 🚀 Key Features
 
-* **Multi-Source Scraping:** Fetches data from 3 major platforms: **OLX, Praca.pl, RocketJobs**.
-* **Data Analysis:** Uses `Pandas` for data cleaning, normalization, and duplicate removal.
-* **Server-Side Filtering:** Advanced filtering and sorting logic implemented entirely in Python (Backend), with **no JavaScript** used for business logic (Strict Requirement).
-* **Market Analytics:** Built-in module for keyword extraction (Text Mining) and source statistics.
-* **Clean Architecture:** Strict separation between the Data Collection Layer (Scraper) and the Presentation Layer (Web App).
+* **Multi-Source Scraping:** Aggregates data from major platforms: **OLX, Praca.pl, RocketJobs, and NoFluffJobs**.
+* **Data Analysis & Mining:** Utilizes `Pandas` for data cleaning, normalization, and automated duplicate removal based on unique URLs.
+* **Dynamic Market Analytics:** Features a module for technology popularity analysis (keyword mining) and job board market share statistics.
+* **Strict Server-Side Logic:** All filtering, sorting, and pagination logic is implemented entirely in Python/Flask. No JavaScript is used for business logic, meeting strict academic requirements for this project.
+* **Data Export:** Built-in functionality to export the current database state to an Excel (.xlsx) file for further offline analysis.
 
 ## 🛠️ Tech Stack
 
 * **Backend:** Python 3, Flask, Jinja2
-* **Database:** SQLite3
-* **Data Science:** Pandas, NumPy (for statistics)
-* **Scraping:** BeautifulSoup4, Requests
-* **Frontend:** HTML5, CSS3 (Custom CSS, Responsive Design)
+* **Database:** SQLite3 (with custom REGEXP implementation for advanced filtering)
+* **Data Science:** Pandas, NumPy
+* **Scraping:** BeautifulSoup4, Requests (includes User-Agent rotation and anti-scraping delays)
+* **Frontend:** HTML5, CSS3 (Custom responsive design, strictly no inline styles)
 
 ## 🏗️ Project Architecture
 
-The project follows the **Separation of Concerns** principle:
+The project adheres to the **Separation of Concerns** principle through a two-app architecture:
 
 1.  **App A (Collector - `main.py`):**
-    * Orchestrates dedicated modules from the `collectors/` package.
-    * Transforms raw HTML data into `pandas.DataFrame`.
+    * Orchestrates modules from the `collectors/` package.
+    * Transforms raw HTML data into `pandas.DataFrame` structures.
     * Loads unique records into the SQLite database.
 2.  **App B (Web Server - `run_server.py`):**
-    * Reads processed data from the database.
     * Handles HTTP routing and request processing.
-    * Renders HTML templates using Jinja2.
-3.  **Business Logic (`analytics.py`):**
-    * Handles keyword extraction and statistical analysis, keeping the views clean.
+    * Executes advanced SQL queries for data filtering.
+    * Renders dynamic templates using the Jinja2 engine.
+3.  **Business Logic & DAO (`analytics.py` & `db_manager.py`):**
+    * `analytics.py`: Performs keyword extraction and statistical calculations.
+    * `db_manager.py`: Implements the Data Access Object (DAO) pattern for secure database communication.
 
 ### File Structure
 
 ```text
 robota_tej/
 │
-├── collectors/             # Python package containing scraper modules
+├── collectors/             # Python package with dedicated scraper modules
+│   ├── scraper_nofluff.py
 │   ├── scraper_olx.py
 │   ├── scraper_pracapl.py
 │   └── scraper_rocketjobs.py
 │
-├── data/                   # Directory for the SQLite database
-├── static/                 # CSS styles and static assets
-├── templates/              # HTML templates (Jinja2)
+├── data/                   # Directory for the SQLite database file
+├── static/                 # External CSS styles (style.css)
+├── templates/              # Jinja2 HTML templates (index.html, stats.html)
 │
-├── analytics.py            # Analytics module (keyword mining, stats)
-├── config.py               # Central configuration (paths, constants)
-├── db_manager.py           # Data Access Object (DAO) layer
-├── main.py                 # Entry point for the Scraping Pipeline
-├── run_server.py           # Entry point for the Flask Web App
-├── setup_db.py             # Database initialization script
+├── analytics.py            # Data mining and statistical analysis module
+├── config.py               # Central configuration (paths, constants, URLs)
+├── db_manager.py           # Database management and DAO layer
+├── main.py                 # Entry point for the Scraping Pipeline (App A)
+├── run_server.py           # Entry point for the Flask Web App (App B)
+├── setup_db.py             # Database schema initialization script
 └── requirements.txt        # Project dependencies
 ```
-
 ## ⚙️ Installation & Usage
-
-To run the project locally, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
@@ -81,25 +80,19 @@ To run the project locally, follow these steps:
     python setup_db.py
     ```
 
-4.  **Fetch offers (Run Scrapers):**
-    Execute the scraper to populate the database (this may take approx. 30-60 seconds).
+4.  **Fetch job offers (Run Scrapers):**
     ```bash
     python main.py
     ```
 
-5.  **Run the Web Server:**
+5.  **Start the Web Server:**
     ```bash
     python run_server.py
     ```
 
-6.  **Open the application:**
-    Go to: `http://127.0.0.1:5001` in your browser.
-
-## 📊 Features Overview
-
-* **Dashboard:** List of job offers with pagination, sorting, and source filtering.
-* **Statistics:** Charts showing technology popularity (keywords) and job board market share.
+6.  **Access the application:**
+    Open `http://127.0.0.1:5000` in your browser.
 
 ## 📝 About
 
-Project realized as a final assignment for the course: *Python Applications in Economic Analysis*.
+This project was developed as a final assignment for the course: *Python Applications in Economic Analysis*. It focuses on clean code principles, automated data acquisition, and semantic data analysis.

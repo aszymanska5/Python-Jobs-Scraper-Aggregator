@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request
 import db_manager
 import analytics
 import math
@@ -14,8 +14,9 @@ def index():
     page = int(request.args.get('page', 1))
 
     df = db_manager.get_all_offers_as_df()
+    
     if df.empty:
-        return render_template('index.html', offers=[], total_items=0, page=1, total_pages=1, page_range=[1])
+        return render_template('index.html', offers=[], total_items=0, page=1, total_pages=1, page_range=[1], sources=[])
 
     if query:
         df = df[df['title'].str.lower().str.contains(query.lower())]
@@ -29,6 +30,9 @@ def index():
 
     total_items = len(df)
     total_pages = math.ceil(total_items / ITEMS_PER_PAGE)
+    if total_pages == 0: total_pages = 1
+    
+    page = max(1, min(page, total_pages))
     
     start = (page - 1) * ITEMS_PER_PAGE
     end = start + ITEMS_PER_PAGE
@@ -37,13 +41,22 @@ def index():
     range_size = 5
     start_p = max(1, page - 2)
     end_p = min(total_pages, start_p + range_size - 1)
+    
+    if end_p - start_p + 1 < range_size:
+        if start_p == 1:
+            end_p = min(total_pages, start_p + range_size - 1)
+        elif end_p == total_pages:
+            start_p = max(1, end_p - range_size + 1)
+
     page_range = range(start_p, end_p + 1)
+    
+    available_sources = db_manager.get_all_offers_as_df()['source_site'].unique().tolist() if not df.empty else []
 
     return render_template('index.html',
                            offers=offers_list, total_items=total_items,
                            page=page, total_pages=total_pages, page_range=page_range,
                            current_query=query, current_source=source, current_sort=sort,
-                           sources=df['source_site'].unique().tolist(),
+                           sources=available_sources,
                            quick_filters=analytics.get_quick_filters())
 
 @app.route('/stats')

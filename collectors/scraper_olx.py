@@ -26,6 +26,8 @@ def scrape_olx():
             if response.status_code != 200:
                 break
 
+            response.encoding = 'utf-8'    
+
             soup = BeautifulSoup(response.text, 'html.parser')
             links = soup.find_all('a', href=True)
 

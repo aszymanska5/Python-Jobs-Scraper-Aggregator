@@ -1,52 +1,49 @@
+import sqlite3
+import collections
 import re
-import pandas as pd
-from collections import Counter
-from db_manager import get_db_connection
+import os
+from config import DB_PATH
 
-def get_dynamic_quick_filters() -> list:
-    try:
-        conn = get_db_connection()
-        rows = conn.execute("SELECT title FROM offers").fetchall()
-        conn.close()
-        
-        if not rows:
-            return []
-        
-        text = " ".join([r[0] for r in rows]).lower()
-        words = re.sub(r'[^\w\s]', '', text).split()
-        
-        stop_words = {
-            'w', 'z', 'i', 'na', 'do', 'o', 'dla', 'oraz', 'od', 'po', 'ze', 'za', 
-            'poznan', 'poznań', 'praca', 'oferta', 'pl', 'oferty', 'szukamy', 'new', 
-            'remote', 'hybrydowa', 'stacjonarna', 'senior', 'junior', 'mid'
-        }
-        
-        filtered = [w for w in words if w not in stop_words and len(w) > 3]
-        return [w.capitalize() for w in [item[0] for item in Counter(filtered).most_common(5)]]
-    except Exception:
-        return []
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def get_stats_data():
-    try:
-        conn = get_db_connection()
-        df = pd.read_sql_query("SELECT title, source_site FROM offers", conn)
-        conn.close()
-        
-        if df.empty:
-            return None, None
-        
-        counts = df['source_site'].value_counts().to_dict()
-        
-        text = " ".join(df['title'].astype(str).str.lower())
-        words = re.sub(r'[^\w\s]', '', text).split()
-        
-        stop_words = {
-            'w', 'z', 'i', 'na', 'do', 'o', 'dla', 'oraz', 'od', 'po', 'ze', 'za', 
-            'poznan', 'poznań', 'praca', 'oferta', 'pl', 'oferty', 'szukamy', 'new'
-        }
-        
-        top_keywords = Counter([w for w in words if w not in stop_words and len(w) > 3]).most_common(10)
-        
-        return counts, top_keywords
-    except Exception:
-        return None, None
+    if not os.path.exists(DB_PATH): return {}, [], 0
+    conn = get_db_connection()
+    
+    rows = conn.execute("SELECT source_site, COUNT(*) as count FROM offers WHERE source_site != '' GROUP BY source_site").fetchall()
+    sources_dict = {row['source_site']: row['count'] for row in rows}
+    
+    titles = conn.execute("SELECT title FROM offers").fetchall()
+    conn.close()
+    
+    all_text = " ".join([t['title'].lower() for t in titles])
+    tech_list = ['python', 'java', 'sql', 'javascript', 'tester', 'driver', 'magazynier', 'sprzedawca', 'junior', 'senior']
+    
+    top_keywords = []
+    for tech in tech_list:
+        c = len(re.findall(rf'\b{re.escape(tech)}\b', all_text))
+        if c > 0:
+            top_keywords.append((tech.capitalize(), c))
+    
+    top_keywords.sort(key=lambda x: x[1], reverse=True)
+    max_val = max([x[1] for x in top_keywords]) if top_keywords else 1
+    
+    return sources_dict, top_keywords, max_val
+
+def get_quick_filters():
+    if not os.path.exists(DB_PATH): return []
+    conn = get_db_connection()
+    titles = conn.execute("SELECT title FROM offers").fetchall()
+    conn.close()
+    
+    words = []
+    stop_words = {'w', 'na', 'dla', 'z', 'do', 'o', 'and', 'the', 'of', 'pracy', 'oferta', 'poznan'}
+    for t in titles:
+        found = re.findall(r'\b\w+\b', t['title'].lower())
+        words.extend([w for w in found if len(w) > 3 and w not in stop_words])
+    
+    most_common = collections.Counter(words).most_common(6)
+    return [x[0].capitalize() for x in most_common]

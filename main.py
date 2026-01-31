@@ -1,42 +1,39 @@
-import pandas as pd
-from collectors.scraper_rocketjobs import scrape_rocket
-from collectors.scraper_pracapl import scrape_pracapl
+from db_manager import init_db, add_offer
+from collectors.scraper_nofluff import scrape_nofluff
 from collectors.scraper_olx import scrape_olx
-from db_manager import add_offers
+from collectors.scraper_pracapl import scrape_pracapl
+from collectors.scraper_rocketjobs import scrape_rocket
 
 def run_aggregator():
-    print("--- STARTING JOB AGGREGATOR ---")
+    print("--- STARTING JOB AGGREGATOR (STABLE TRIPLE-SOURCE MODE) ---")
     
-    all_offers_list = []
+    init_db()
     
-    try:
-        rocket_data = scrape_rocket()
-        all_offers_list.extend(rocket_data)
-    except Exception as e:
-        print(f"[Main] Error RocketJobs: {e}")
-
-    try:
-        pracapl_data = scrape_pracapl()
-        all_offers_list.extend(pracapl_data)
-    except Exception as e:
-        print(f"[Main] Error Praca.pl: {e}")
-
-    try:
-        olx_data = scrape_olx()
-        all_offers_list.extend(olx_data)
-    except Exception as e:
-        print(f"[Main] Error OLX: {e}")
-
-    print(f"[Main] Aggregating {len(all_offers_list)} offers...")
+    scrapers = {
+        "NoFluffJobs": scrape_nofluff,
+        "OLX": scrape_olx,
+        "Praca.pl": scrape_pracapl,
+        "Rocket Jobs": scrape_rocket,
+    }
     
-    if all_offers_list:
-        df = pd.DataFrame(all_offers_list)
-        new_count = add_offers(df)
-        print(f"[Main] Success! Added {new_count} new unique offers.")
-    else:
-        print("[Main] No offers fetched today.")
+    total_new = 0
+    
+    for name, scraper_func in scrapers.items():
+        print(f"\n[Main] Running {name} scraper...")
+        try:
+            offers = scraper_func()
+            new_from_source = 0
+            for offer in offers:
+                if add_offer(offer):
+                    new_from_source += 1
+            
+            total_new += new_from_source
+            print(f"[Main] {name} returned {len(offers)} offers. Added {new_from_source} NEW.")
+        except Exception as e:
+            print(f"[Main] Error in {name}: {e}")
 
-    print("--- FINISHED ---")
+    print("\n--- AGGREGATION FINISHED ---")
+    print(f"Total new unique offers added this run: {total_new}")
 
 if __name__ == "__main__":
     run_aggregator()

@@ -228,6 +228,10 @@ td {
     background: #ff4d4d;
 }
 
+.badge.nofluffjobs {
+    background: #ffad00; 
+}
+
 .pagination-container {
     margin: 3rem 0;
     display: flex;

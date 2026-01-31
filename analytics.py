@@ -40,7 +40,7 @@ def get_quick_filters():
     conn.close()
     
     words = []
-    stop_words = {'w', 'na', 'dla', 'z', 'do', 'o', 'and', 'the', 'of', 'pracy', 'oferta', 'poznan'}
+    stop_words = {'w', 'na', 'dla', 'z', 'do', 'o', 'and', 'the', 'with', 'of', 'pracy', 'oferta', 'poznan'}
     for t in titles:
         found = re.findall(r'\b\w+\b', t['title'].lower())
         words.extend([w for w in found if len(w) > 3 and w not in stop_words])

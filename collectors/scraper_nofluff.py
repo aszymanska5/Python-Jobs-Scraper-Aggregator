@@ -1,74 +1,64 @@
 import requests
 import time
 import random
-from config import USER_AGENT
+from bs4 import BeautifulSoup
+from config import NOFLUFF_URL, USER_AGENT
 
 def scrape_nofluff():
-    url = "https://nofluffjobs.com/api/search/posting"
-    
     headers = {
-        "Content-Type": "application/infiniteSearch+json",
-        "User-Agent": USER_AGENT,
-        "Accept": "application/json, text/plain, */*",
-        "Origin": "https://nofluffjobs.com",
-        "Referer": "https://nofluffjobs.com/pl/poznan"
+        "User-Agent": USER_AGENT
     }
-
-    payload = {
-        "rawSearch": "city=poznan",
-        "pageSize": 50,
-        "withSalaryMatch": True
-    }
-
-    all_data = []
-    seen_ids = set()
     
-    print("[NoFluffJobs] Starting scraper (Clean Title Strategy)...")
+    all_data = []
+    seen_links = set()
+    MAX_PAGES = 5
+    
+    print("[NoFluffJobs] Starting scraper...")
 
-    for page in range(1, 4):
-        params = {
-            "pageFrom": page,
-            "pageTo": page,
-            "salaryCurrency": "PLN",
-            "salaryPeriod": "month",
-            "region": "pl",
-            "language": "pl-PL"
-        }
+    for page in range(1, MAX_PAGES + 1):
+        sep = '&' if '?' in NOFLUFF_URL else '?'
+        url = f"{NOFLUFF_URL}{sep}page={page}"
+        
+        print(f"[NoFluffJobs] Processing page {page}...")
         
         try:
-            response = requests.post(url, params=params, json=payload, headers=headers, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                postings = data.get('postings', [])
-                
-                if not postings:
-                    break
-
-                for post in postings:
-                    p_id = post.get('id') or post.get('url')
-                    if not p_id or p_id in seen_ids:
-                        continue
-                    seen_ids.add(p_id)
-
-                    raw_title = post.get('title', 'Oferta IT')
-                    clean_title = raw_title.replace('Nowa', '').replace('NOWA', '').replace('nowa', '').strip()
-                    
-                    link = f"https://nofluffjobs.com/job/{post.get('url')}"
-                    
-                    all_data.append({
-                        "title": clean_title,
-                        "link": link,
-                        "source_site": "NoFluffJobs"
-                    })
-            else:
-                print(f"[NoFluffJobs] Błąd API: {response.status_code}")
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code != 200:
                 break
-            
-            time.sleep(random.uniform(1.0, 2.0))
-        except Exception as e:
-            print(f"[NoFluffJobs] Błąd: {e}")
-            continue
 
-    print(f"[NoFluffJobs] Finished. Found {len(all_data)} clean offers.")
+            soup = BeautifulSoup(response.text, 'html.parser')
+            links = soup.find_all('a', href=True)
+
+            for link_tag in links:
+                href = link_tag['href']
+                if '/job/' not in href:
+                    continue
+
+                full_link = f"https://nofluffjobs.com{href}"
+
+                if full_link in seen_links:
+                    continue
+                seen_links.add(full_link)
+
+                title_tag = link_tag.find('h3')
+                if title_tag:
+                    title = title_tag.text.strip()
+                else:
+                    slug = href.split('/job/')[-1]
+                    title = slug.replace('-', ' ').title()
+
+                if title.lower().endswith("nowa"):
+                    title = title[:-4].strip()
+
+                all_data.append({
+                    'title': title,
+                    'link': full_link,
+                    'source_site': 'NoFluffJobs'
+                })
+
+            time.sleep(random.uniform(1, 2))
+        except Exception:
+            break
+
+    print(f"[NoFluffJobs] Finished. Total offers: {len(all_data)}")
     return all_data

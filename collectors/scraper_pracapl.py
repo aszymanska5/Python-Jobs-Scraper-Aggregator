@@ -2,72 +2,61 @@ import requests
 import time
 import random
 from bs4 import BeautifulSoup
-from config import USER_AGENT
+from config import PRACA_PL_URL, USER_AGENT
 
 def scrape_pracapl():
-    headers = {"User-Agent": USER_AGENT}
-    
-    urls = [
-        "https://www.praca.pl/oferty-pracy_wielkopolskie.html",
-        "https://www.praca.pl/praca-zdalna.html"
-    ]
+    headers = {
+        "User-Agent": USER_AGENT
+    }
 
     all_data = []
     seen_urls = set()
-    MAX_PAGES = 5
+    page_num = 1
+    MAX_PAGES_PRACAPL = 5
 
-    print("[Praca.pl] Starting scraper (BROAD SEARCH - Region Only)...")
+    print("[Praca.pl] Starting scraper...")
 
-    for base_url in urls:
-        for page_num in range(1, MAX_PAGES + 1):
-            url = f"{base_url}?p={page_num}" if page_num > 1 else base_url
+    while page_num <= MAX_PAGES_PRACAPL:
+        sep = '&' if '?' in PRACA_PL_URL else '?'
+        url = PRACA_PL_URL if page_num == 1 else f"{PRACA_PL_URL}{sep}p={page_num}"
+        
+        print(f"[Praca.pl] Processing page {page_num}...")
 
-            try:
-                resp = requests.get(url, headers=headers, timeout=10)
-                if resp.status_code != 200:
-                    break
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                break
 
-                soup = BeautifulSoup(resp.text, 'html.parser')
-                items = soup.find_all('li', class_="listing__item")
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            listing_items = soup.find_all('li', class_="listing__item")
+            
+            for item in listing_items:
+                link_tag = item.find('a', class_="listing__offer-title", href=True) or item.find('a', href=True)
+                if not link_tag:
+                    continue
+
+                href = link_tag['href']
+                full_link = href if href.startswith('http') else f"https://www.praca.pl{href}"
+
+                if full_link in seen_urls:
+                    continue
                 
-                if not items:
-                    items = soup.find_all('div', class_="listing__item") 
+                if 'oferta' not in full_link and '.html' not in full_link:
+                    continue
 
-                for item in items:
-                    link_tag = item.find('a', class_="listing__offer-title")
-                    if not link_tag:
-                        link_tag = item.find('a', href=True)
+                seen_urls.add(full_link)
+                title = link_tag.text.strip() or "Praca.pl Offer"
 
-                    if not link_tag:
-                        continue
+                all_data.append({
+                    "title": title,
+                    "link": full_link,
+                    "source_site": "Praca.pl"
+                })
 
-                    href = link_tag.get('href')
-                    if not href or 'javascript' in href:
-                        continue
-                        
-                    full_link = href if href.startswith('http') else f"https://www.praca.pl{href}"
+            page_num += 1
+            time.sleep(random.uniform(1, 2))
+        except Exception:
+            break
 
-                    if full_link in seen_urls:
-                        continue
-                    seen_urls.add(full_link)
-                    
-                    title = link_tag.text.strip()
-                    if not title:
-                        title_tag = item.find('h3') 
-                        if title_tag:
-                            title = title_tag.text.strip()
-                        else:
-                            title = "Oferta Pracy"
-
-                    all_data.append({
-                        "title": title,
-                        "link": full_link,
-                        "source_site": "Praca.pl"
-                    })
-
-                time.sleep(random.uniform(0.5, 1.0))
-            except Exception:
-                continue
-
-    print(f"[Praca.pl] Finished. Found {len(all_data)} offers.")
+    print(f"[Praca.pl] Finished. Total offers: {len(all_data)}")
     return all_data

@@ -15,7 +15,9 @@ def scrape_rocket():
     print("[RocketJobs] Starting scraper...")
 
     for page_num in range(1, MAX_PAGES_ROCKET + 1):
-        url = f"{ROCKET_URL}?page={page_num}"
+        sep = '&' if '?' in ROCKET_URL else '?'
+        url = f"{ROCKET_URL}{sep}page={page_num}"
+        
         print(f"[RocketJobs] Processing page {page_num}...")
         
         try:
@@ -45,6 +47,9 @@ def scrape_rocket():
                     if "Poznan" in clean_slug:
                         clean_slug = clean_slug.split("Poznan")[0]
                     title = clean_slug.strip()
+
+                if title.lower().endswith("nowa"):
+                    title = title[:-4].strip()
 
                 all_offers.append({
                     "title": title,
